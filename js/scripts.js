@@ -10,8 +10,13 @@
  * showUserModal()
  * 
  */
+let userArray = [];
+getUsers()
+    .then(data => userArray = data)
+    .then(userArray => showUsersOnPage(userArray));
 
-const userArray = getUsers();
+createSearchBar();
+
 
  /**
   * get users from random user API
@@ -20,7 +25,7 @@ const userArray = getUsers();
  async function getUsers() {
      const userArray = [];
      for (let i = 0; i < 12; i++) {
-        await fetch('https://randomuser.me/api/')
+        await fetch('https://randomuser.me/api/?nat=us')
             .then(data => data.json())
             .then(data => userArray.push(data.results[0]));
      }
@@ -28,13 +33,14 @@ const userArray = getUsers();
 
  }
 
+
 /** 
  * create HTML markup for card
  * @param {object} user object from API
 */
 function createCard(user) {
     const html = `
-    <div class="card" id="user-card-${user.login.uuid}">
+    <div class="card" id="${user.login.uuid}">
         <div class="card-img-container">
             <img class="card-img" src="${user.picture.large}" alt="profile picture">
         </div>
@@ -55,12 +61,17 @@ function createCard(user) {
  */
 function showUsersOnPage(users) {
     const $gallery = $('#gallery')
+    $gallery.empty();
     for (let i = 0; i < users.length; i++) {
         let card = createCard(users[i]);
         $gallery.append(card);
     }
 }
 
+/**
+ * create a model to show user details
+ * @param {object} user
+ */
 function createModal(user) {
     const html = `
     <div class="modal-container">
@@ -70,32 +81,90 @@ function createModal(user) {
                 <img class="modal-img" src="${user.picture.large}" alt="profile picture">
                 <h3 id="name" class="modal-name cap"> ${user.name.first} ${user.name.last}</h3>
                 <p class="modal-text">${user.email}</pp>
-                <p class="modal-text cap">${user.location.city}</p>
+                <p class="modal-text cap">${user.location.city}, ${user.location.state}</p>
                 <hr>
                 <p class="modal-text">${user.phone}</p>
-                <p class="modal-text">${user.location.street}</p>
-                <p class="modal-text">Birthday: ${user.dob.date}
+                <p class="modal-text">${user.location.street.number} ${user.location.street.name}, ${user.location.city}, ${user.location.state} ${user.location.postcode}</p>
+                <p class="modal-text">Birthday: ${extractDate(user.dob.date)}
             </div>
             <div class="modal-btn-container">
                 <button type="button" id="modal-prev" class="modal-prev btn"Prev</button>
                 <button type="button" id="modal-next" class="modal-next btn">Next</button>
             </div>
         </div>`
+
+        $body = $('body')
+        $body.append(html);
+        
+
+        const closeBtn = document.querySelector('#modal-close-btn');
+        closeBtn.addEventListener('click', () => {
+            const modal = document.querySelector('.modal-container');
+            modal.parentElement.removeChild(modal);
+        })
+
+        
 }
+
+function createSearchBar() {
+    const html = `
+    <form action="#" method="get">
+        <input type="search" id="search-input" class="search-input" placeholder="Search...">
+        <input type="submit" value="&#x1F50D;" id="search-submit" class="search-submit">
+    </form>`
+
+    $searchContainer = $('.search-container');
+    $searchContainer.append(html);
+
+}
+
+const searchInput = document.querySelector('#search-input');
+searchInput.addEventListener('keyup', () => {
+    showUsersOnPage(searchName(searchInput.value));
+})
 
 /**
  * searches a particular user field (i.e. name) for a search phrase
  * @param {string} searchTerm - string to search for
- * @param {string} field which user field to search in
+ * @return {array} - users found with search term
  */
-function searchUsers(searchTerm, field) {
-    const foundUsers = [];
+function searchName(searchTerm) {
+    const foundName = [];
+    searchTerm = searchTerm.toLowerCase();
     for (let i = 0; i < userArray.length; i++) {
-        if (userArray[i][field] = searchTerm) {
-            foundUsers.push(userArray[i]);
+        let name = `${userArray[i].name.first} ${userArray[i].name.last}`;
+        name = name.toLowerCase();
+        if (name.includes(searchTerm)) {
+            foundName.push(userArray[i]);
+            console.log(userArray[i].name.first);
         }
     }
-    return foundUsers;
+    return foundName;
+}
+
+function findUser(uuid) {
+    for (let i = 0; i < userArray.length; i++) {
+        if (userArray[i].login.uuid === uuid) {
+            return userArray[i];
+        }
+    }
+}
+
+
+
+
+
+/**
+ * returns date as user-friendly string
+ * Ex: 1986-09-04T11:37:56.355Z
+ * Ex: Sep 04, 1986
+ * Ex: 09-04-1986
+ * @param {string} dateString - birthday string provided by randomuser.me
+ */
+function extractDate(dateString) {
+    const regex = /(\d{4})-(\d{2})-(\d{2})/;
+    const match = dateString.match(regex);
+    return `${match[2]}-${match[3]}-${match[1]}`
 }
 
 
@@ -104,12 +173,16 @@ function searchUsers(searchTerm, field) {
  * Event Listeners
  */
 
-
-showUsersOnPage(userArray);
-
 const gallery = document.querySelector('#gallery');
 gallery.addEventListener('click', e => {
     if (e.target.className != "gallery") {
-        console.log('we\'ve got it!');
+        const card = e.target.closest('.card');
+        const user = findUser(card.id);
+
+
+        $body = $('body')
+        const modalHTML = createModal(user);
+        $body.append(modalHTML);
     }
 });
+
