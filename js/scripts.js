@@ -14,7 +14,7 @@ let masterUserArray = [];
 getUsers()
     .then(data => masterUserArray = data)
     .then(masterUserArray => showUsersOnPage(masterUserArray));
-let currentUserArray = [];
+let currentUserArray = masterUserArray;
 createSearchBar();
 let currentShownUser;
 
@@ -68,6 +68,7 @@ function showUsersOnPage(users) {
         let card = createCard(users[i]);
         $gallery.append(card);
     }
+    currentUserArray = users;
 }
 
 /**
@@ -91,7 +92,7 @@ function createModal(user) {
                 <p class="modal-text">Birthday: ${extractDate(user.dob.date)}
             </div>
             <div class="modal-btn-container">
-                <button type="button" id="modal-prev" class="modal-prev btn"Prev</button>
+                <button type="button" id="modal-prev" class="modal-prev btn">Prev</button>
                 <button type="button" id="modal-next" class="modal-next btn">Next</button>
             </div>
         </div>`
@@ -133,30 +134,25 @@ searchInput.addEventListener('keyup', () => {
 /**
  * searches a particular user field (i.e. name) for a search phrase
  * @param {string} searchTerm - string to search for
+ * @param {array} array array to search through
  * @return {array} - users found with search term
  */
-function searchName(searchTerm) {
+function searchName(searchTerm, array) {
+    array = array || masterUserArray;
     searchTerm = searchTerm.replace('-', " ");
-    const foundName = [];
+    const foundNames = [];
     searchTerm = searchTerm.toLowerCase();
-    for (let i = 0; i < masterUserArray.length; i++) {
-        let name = `${masterUserArray[i].name.first} ${masterUserArray[i].name.last}`;
+    for (let i = 0; i < array.length; i++) {
+        let name = `${array[i].name.first} ${array[i].name.last}`;
         name = name.toLowerCase();
         if (name.includes(searchTerm)) {
-            foundName.push(masterUserArray[i]);
-            console.log(masterUserArray[i].name.first);
+            foundNames.push(array[i]);
         }
     }
-    return foundName;
+
+    return foundNames;
 }
 
-function findUser(uuid) {
-    for (let i = 0; i < masterUserArray.length; i++) {
-        if (masterUserArray[i].login.uuid === uuid) {
-            return masterUserArray[i];
-        }
-    }
-}
 
 function removeModal() {
     const modal = document.querySelector('.modal-container');
@@ -165,10 +161,13 @@ function removeModal() {
 
 
 function viewNext(e) {
-    const thisUser = document.querySelector(`#${currentShownUser.login.uuid}`);
+    const thisUser = document.querySelector(`#${currentShownUser.name.first}-${currentShownUser.name.last}`);
     const nextUser = thisUser.nextElementSibling;
-    removeModal();
-    createModal(findUser(nextUser.id));
+    if (nextUser) {
+        removeModal();
+        createModal(searchName(nextUser.id, currentUserArray)[0]);
+    }
+    
 }
 
 function viewPrev() {}
@@ -199,10 +198,8 @@ gallery.addEventListener('click', e => {
         const card = e.target.closest('.card');
         const user = searchName(card.id)[0];
 
-
-        $body = $('body')
         const modalHTML = createModal(user);
-        $body.append(modalHTML);
+        $('body').append(modalHTML);
     }
 });
 
