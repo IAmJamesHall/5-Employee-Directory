@@ -10,12 +10,13 @@
  * showUserModal()
  * 
  */
-let userArray = [];
+let masterUserArray = [];
 getUsers()
-    .then(data => userArray = data)
-    .then(userArray => showUsersOnPage(userArray));
-
+    .then(data => masterUserArray = data)
+    .then(masterUserArray => showUsersOnPage(masterUserArray));
+let currentUserArray = [];
 createSearchBar();
+let currentShownUser;
 
 
  /**
@@ -40,7 +41,7 @@ createSearchBar();
 */
 function createCard(user) {
     const html = `
-    <div class="card" id="${user.login.uuid}">
+    <div class="card" id="${user.name.first}-${user.name.last}">
         <div class="card-img-container">
             <img class="card-img" src="${user.picture.large}" alt="profile picture">
         </div>
@@ -61,6 +62,7 @@ function createCard(user) {
  */
 function showUsersOnPage(users) {
     const $gallery = $('#gallery')
+    
     $gallery.empty();
     for (let i = 0; i < users.length; i++) {
         let card = createCard(users[i]);
@@ -73,6 +75,7 @@ function showUsersOnPage(users) {
  * @param {object} user
  */
 function createModal(user) {
+    currentShownUser = user;
     const html = `
     <div class="modal-container">
         <div class="modal">
@@ -98,13 +101,17 @@ function createModal(user) {
         
 
         const closeBtn = document.querySelector('#modal-close-btn');
-        closeBtn.addEventListener('click', () => {
-            const modal = document.querySelector('.modal-container');
-            modal.parentElement.removeChild(modal);
-        })
+        closeBtn.addEventListener('click', removeModal);
+
+        const prevButton = document.querySelector('.modal-prev');
+        prevButton.addEventListener('click', viewPrev);
+
+        const nextButton = document.querySelector('.modal-next');
+        nextButton.addEventListener('click', viewNext);
 
         
 }
+
 
 function createSearchBar() {
     const html = `
@@ -129,29 +136,42 @@ searchInput.addEventListener('keyup', () => {
  * @return {array} - users found with search term
  */
 function searchName(searchTerm) {
+    searchTerm = searchTerm.replace('-', " ");
     const foundName = [];
     searchTerm = searchTerm.toLowerCase();
-    for (let i = 0; i < userArray.length; i++) {
-        let name = `${userArray[i].name.first} ${userArray[i].name.last}`;
+    for (let i = 0; i < masterUserArray.length; i++) {
+        let name = `${masterUserArray[i].name.first} ${masterUserArray[i].name.last}`;
         name = name.toLowerCase();
         if (name.includes(searchTerm)) {
-            foundName.push(userArray[i]);
-            console.log(userArray[i].name.first);
+            foundName.push(masterUserArray[i]);
+            console.log(masterUserArray[i].name.first);
         }
     }
     return foundName;
 }
 
 function findUser(uuid) {
-    for (let i = 0; i < userArray.length; i++) {
-        if (userArray[i].login.uuid === uuid) {
-            return userArray[i];
+    for (let i = 0; i < masterUserArray.length; i++) {
+        if (masterUserArray[i].login.uuid === uuid) {
+            return masterUserArray[i];
         }
     }
 }
 
+function removeModal() {
+    const modal = document.querySelector('.modal-container');
+    modal.parentElement.removeChild(modal);
+}
 
 
+function viewNext(e) {
+    const thisUser = document.querySelector(`#${currentShownUser.login.uuid}`);
+    const nextUser = thisUser.nextElementSibling;
+    removeModal();
+    createModal(findUser(nextUser.id));
+}
+
+function viewPrev() {}
 
 
 /**
@@ -177,7 +197,7 @@ const gallery = document.querySelector('#gallery');
 gallery.addEventListener('click', e => {
     if (e.target.className != "gallery") {
         const card = e.target.closest('.card');
-        const user = findUser(card.id);
+        const user = searchName(card.id)[0];
 
 
         $body = $('body')
@@ -185,4 +205,6 @@ gallery.addEventListener('click', e => {
         $body.append(modalHTML);
     }
 });
+
+
 
