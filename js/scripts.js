@@ -17,6 +17,7 @@ getUsers()
 let currentUserArray = masterUserArray;
 createSearchBar();
 let currentShownUser;
+let fired = false;
 
 
  /**
@@ -77,7 +78,13 @@ function showUsersOnPage(users) {
  */
 function createModal(user) {
     currentShownUser = user;
-    const html = `
+    let firstCard = lastCard = false;
+    if (user === currentUserArray[0]) {
+        firstCard = true;
+    } else if (user === currentUserArray[currentUserArray.length - 1]) {
+        lastCard = true;
+    }
+    let html = `
     <div class="modal-container">
         <div class="modal">
             <button type="button" id="modal-close-btn" class="modal-close-btn"><strong>X</strong></button>
@@ -91,26 +98,50 @@ function createModal(user) {
                 <p class="modal-text">${user.location.street.number} ${user.location.street.name}, ${user.location.city}, ${user.location.state} ${user.location.postcode}</p>
                 <p class="modal-text">Birthday: ${extractDate(user.dob.date)}
             </div>
-            <div class="modal-btn-container">
-                <button type="button" id="modal-prev" class="modal-prev btn">Prev</button>
-                <button type="button" id="modal-next" class="modal-next btn">Next</button>
-            </div>
-        </div>`
-
-        $body = $('body')
-        $body.append(html);
+            <div class="modal-btn-container">`
+            if (!firstCard) {
+                html += `<button type="button" id="modal-prev" class="modal-prev btn">Prev</button>`;
+            } 
+            if (!lastCard) {
+                html += `<button type="button" id="modal-next" class="modal-next btn">Next</button>`;
+            }
+            html += '</div></div>';
+                
+                
+        $('body').append(html);
         
 
         const closeBtn = document.querySelector('#modal-close-btn');
         closeBtn.addEventListener('click', removeModal);
 
         const prevButton = document.querySelector('.modal-prev');
-        prevButton.addEventListener('click', viewPrev);
+        if (prevButton) {
+            prevButton.addEventListener('click', viewPrev);
+        }
 
         const nextButton = document.querySelector('.modal-next');
-        nextButton.addEventListener('click', viewNext);
+        if (nextButton) {
+            nextButton.addEventListener('click', viewNext);
+        }
 
-        
+
+        window.addEventListener('keydown', (e) => {
+            if (fired === false) {
+                if (e.which === 37) {
+                    viewPrev();
+                    console.log('viewPrev')
+                } else if (e.which === 39) {
+                    viewNext();
+                    console.log('viewNext')
+                }
+            } 
+            fired = true;
+        });
+
+        window.addEventListener('keyup', () => {
+            fired = false;
+        });
+       
 }
 
 
@@ -161,16 +192,23 @@ function removeModal() {
 
 
 function viewNext(e) {
-    const thisUser = document.querySelector(`#${currentShownUser.name.first}-${currentShownUser.name.last}`);
-    const nextUser = thisUser.nextElementSibling;
-    if (nextUser) {
+    const thisUserCard = document.querySelector(`#${currentShownUser.name.first}-${currentShownUser.name.last}`);
+    const nextUserCard = thisUserCard.nextElementSibling;
+    if (nextUserCard) {
         removeModal();
-        createModal(searchName(nextUser.id, currentUserArray)[0]);
+        createModal(searchName(nextUserCard.id, currentUserArray)[0]);
     }
     
 }
 
-function viewPrev() {}
+function viewPrev() {
+    const thisUserCard = document.querySelector(`#${currentShownUser.name.first}-${currentShownUser.name.last}`);
+    const prevUserCard = thisUserCard.previousElementSibling;
+    if (prevUserCard) {
+        removeModal();
+        createModal(searchName(prevUserCard.id, currentUserArray)[0]);
+    }
+}
 
 
 /**
