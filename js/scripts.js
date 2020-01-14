@@ -19,6 +19,15 @@ createSearchBar();
 let currentShownUser;
 let fired = false;
 
+window.addEventListener('keydown', e => {
+    if (e.which > 64 && e.which < 91) {
+        const searchBar = document.querySelector('#search-input');
+        searchBar.focus();
+    }
+    if (e.which === 27) {
+        removeModal();
+    }
+});
 
  /**
   * get users from random user API
@@ -81,7 +90,8 @@ function createModal(user) {
     let firstCard = lastCard = false;
     if (user === currentUserArray[0]) {
         firstCard = true;
-    } else if (user === currentUserArray[currentUserArray.length - 1]) {
+    } 
+    if (user === currentUserArray[currentUserArray.length - 1]) {
         lastCard = true;
     }
     let html = `
@@ -97,15 +107,19 @@ function createModal(user) {
                 <p class="modal-text">${user.phone}</p>
                 <p class="modal-text">${user.location.street.number} ${user.location.street.name}, ${user.location.city}, ${user.location.state} ${user.location.postcode}</p>
                 <p class="modal-text">Birthday: ${extractDate(user.dob.date)}
-            </div>
-            <div class="modal-btn-container">`
-            if (!firstCard) {
-                html += `<button type="button" id="modal-prev" class="modal-prev btn">Prev</button>`;
-            } 
-            if (!lastCard) {
-                html += `<button type="button" id="modal-next" class="modal-next btn">Next</button>`;
+            </div>`
+            if (!firstCard || !lastCard) {
+                html += `<div class="modal-btn-container">`
+                if (!firstCard) {
+                    html += `<button type="button" id="modal-prev" class="modal-prev btn">Prev</button>`;
+                } 
+                if (!lastCard) {
+                    html += `<button type="button" id="modal-next" class="modal-next btn">Next</button>`;
+                }
+                html += '</div>';
             }
-            html += '</div></div>';
+            
+            html += '</div>';
                 
                 
         $('body').append(html);
