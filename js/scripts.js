@@ -1,24 +1,50 @@
 /*
- * James Hall
+ * James Hall (jameshall.xyz)
  * Team Treehouse Project 5 - APIs
  * Started Jan 9, 2020
+ * Finished Jan 14, 2020
  */
+
+
+
+let masterUserArray = [];
+const numberOfUsers = 12;
 
 /**
- * getUsers()
- * showUsersOnPage()
- * showUserModal()
- * 
+ * get data, save it, and show it to the page
  */
-let masterUserArray = [];
 getUsers()
-    .then(data => masterUserArray = data)
+    .then(data => masterUserArray = data) 
     .then(masterUserArray => showUsersOnPage(masterUserArray));
+
+//`currentUserArray` shows whatever is on the page, 
+// such as filtered search results
 let currentUserArray = masterUserArray;
 createSearchBar();
-let currentShownUser;
-let fired = false;
+let currentShownUser; // current user shown in a modal
+let fired = false; //used to regulate arrow keys
 
+
+/**
+ * append search bar to page
+ */
+function createSearchBar() {
+    const searchBarHTML = `
+    <form action="#" method="get">
+        <input type="search" id="search-input" class="search-input" placeholder="Search...">
+        <input type="submit" value="&#x1F50D;" id="search-submit" class="search-submit">
+    </form>`
+
+    $searchContainer = $('.search-container');
+    $searchContainer.append(searchBarHTML);
+
+}
+
+
+/**
+ * on character key, focus search bar
+ * on `esc` press, remove modal
+ */
 window.addEventListener('keydown', e => {
     if (e.which > 64 && e.which < 91) {
         const searchBar = document.querySelector('#search-input');
@@ -35,7 +61,7 @@ window.addEventListener('keydown', e => {
   */
  async function getUsers() {
      const userArray = [];
-     for (let i = 0; i < 12; i++) {
+     for (let i = 0; i < numberOfUsers; i++) {
         await fetch('https://randomuser.me/api/?nat=us')
             .then(data => data.json())
             .then(data => userArray.push(data.results[0]));
@@ -75,7 +101,7 @@ function showUsersOnPage(users) {
     
     $gallery.empty();
     for (let i = 0; i < users.length; i++) {
-        let card = createCard(users[i]);
+        const card = createCard(users[i]);
         $gallery.append(card);
     }
     currentUserArray = users;
@@ -87,6 +113,8 @@ function showUsersOnPage(users) {
  */
 function createModal(user) {
     currentShownUser = user;
+
+    // check if first or last card on the page
     let firstCard = lastCard = false;
     if (user === currentUserArray[0]) {
         firstCard = true;
@@ -139,19 +167,23 @@ function createModal(user) {
         }
 
 
+        // arrow keys
         window.addEventListener('keydown', (e) => {
             if (fired === false) {
-                if (e.which === 37) {
+                if (e.which === 37) { //left arrow key
                     viewPrev();
                     console.log('viewPrev')
-                } else if (e.which === 39) {
+                } else if (e.which === 39) { //right arrow key
                     viewNext();
                     console.log('viewNext')
                 }
             } 
+            // keep arrow keys from firing multiple times
             fired = true;
         });
 
+        
+        //only let the key fire again once `keyup`
         window.addEventListener('keyup', () => {
             fired = false;
         });
@@ -159,18 +191,8 @@ function createModal(user) {
 }
 
 
-function createSearchBar() {
-    const html = `
-    <form action="#" method="get">
-        <input type="search" id="search-input" class="search-input" placeholder="Search...">
-        <input type="submit" value="&#x1F50D;" id="search-submit" class="search-submit">
-    </form>`
 
-    $searchContainer = $('.search-container');
-    $searchContainer.append(html);
-
-}
-
+// on keyup in search bar, filter page by search query
 const searchInput = document.querySelector('#search-input');
 searchInput.addEventListener('keyup', () => {
     showUsersOnPage(searchName(searchInput.value));
@@ -185,8 +207,10 @@ searchInput.addEventListener('keyup', () => {
 function searchName(searchTerm, array) {
     array = array || masterUserArray;
     searchTerm = searchTerm.replace('-', " ");
-    const foundNames = [];
     searchTerm = searchTerm.toLowerCase();
+
+    const foundNames = [];
+    
     for (let i = 0; i < array.length; i++) {
         let name = `${array[i].name.first} ${array[i].name.last}`;
         name = name.toLowerCase();
@@ -194,27 +218,24 @@ function searchName(searchTerm, array) {
             foundNames.push(array[i]);
         }
     }
-
     return foundNames;
 }
 
 
+/**
+ * remove modal from page
+ */
 function removeModal() {
     const modal = document.querySelector('.modal-container');
     modal.parentElement.removeChild(modal);
 }
 
 
-function viewNext(e) {
-    const thisUserCard = document.querySelector(`#${currentShownUser.name.first}-${currentShownUser.name.last}`);
-    const nextUserCard = thisUserCard.nextElementSibling;
-    if (nextUserCard) {
-        removeModal();
-        createModal(searchName(nextUserCard.id, currentUserArray)[0]);
-    }
-    
-}
 
+/**
+ * grabs previous card and shows modal for it
+ * @param {event} e 
+ */
 function viewPrev() {
     const thisUserCard = document.querySelector(`#${currentShownUser.name.first}-${currentShownUser.name.last}`);
     const prevUserCard = thisUserCard.previousElementSibling;
@@ -226,10 +247,25 @@ function viewPrev() {
 
 
 /**
+ * grabs next card and shows modal for it
+ * @param {event} e 
+ */
+function viewNext(e) {
+    const thisUserCard = document.querySelector(`#${currentShownUser.name.first}-${currentShownUser.name.last}`);
+    const nextUserCard = thisUserCard.nextElementSibling;
+    if (nextUserCard) {
+        removeModal();
+        createModal(searchName(nextUserCard.id, currentUserArray)[0]);
+    }
+    
+}
+
+
+
+/**
  * returns date as user-friendly string
- * Ex: 1986-09-04T11:37:56.355Z
- * Ex: Sep 04, 1986
- * Ex: 09-04-1986
+ * Start: 1986-09-04T11:37:56.355Z
+ * End: 09-04-1986
  * @param {string} dateString - birthday string provided by randomuser.me
  */
 function extractDate(dateString) {
@@ -239,11 +275,9 @@ function extractDate(dateString) {
 }
 
 
-
-/************************
- * Event Listeners
+/**
+ * shows modal when user card is clicked
  */
-
 const gallery = document.querySelector('#gallery');
 gallery.addEventListener('click', e => {
     if (e.target.className != "gallery") {
