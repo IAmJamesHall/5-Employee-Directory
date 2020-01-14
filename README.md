@@ -2,7 +2,7 @@
 
 ## Employee Directory
 
-## [Working site](https://iamjameshall.github.io/Project_5/)
+### [Working site](https://iamjameshall.github.io/Project_5/)
 
 This project contained an HTML & CSS framework. I fetched data from [randomuser.me](https://randomuser.me) and displayed it on the page in a user-friendly way.
 
